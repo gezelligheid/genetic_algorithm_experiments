@@ -1,5 +1,6 @@
 from random import randrange
 
+
 def main():
     pass
 
@@ -21,21 +22,37 @@ def evolutionary_algorithm(crossover_probability,
     :param num_generations:
     :return:
     """
-    pop = initialize_pop_knapsack()
+    population = initialize_pop_knapsack()
 
-    while not terminate_knapsack(pop):
+    while not terminate_knapsack(population):
         # selecting mating population
-        pop_mate = [select_knapsack(pop) for i in range(len(pop))]
-        pop = []
-        while len(pop_mate) > 0:
-            # drawing parents
+        population_mate = [select_knapsack(population) for i in
+                           range(len(population))]
+        population = []
+        while len(population_mate) > 0:
+            # drawing parents to mate without replacement
             # https://stackoverflow.com/questions/306400/
             # how-to-randomly-select-an-item-from-a-list
-            random_index = randrange(len(pop_mate))
+            random_index = randrange(len(population_mate))
+            parent1 = population_mate.pop(random_index)
+            random_index = randrange(len(population_mate))
+            parent2 = population_mate.pop(random_index)
+            children = list(
+                crossover_knapsack(
+                    parent1=parent1,
+                    parent2=parent2,
+                    crossover_probability=crossover_probability
+                )
+            )
+            for child in children:
+                for gene in child:
+                    mutate_individual_knapsack(child, gene)
+                population.append(child)
 
 
 def initialize_individual_knapsack():
-    pass
+
+    return individual
 
 
 def initialize_pop_knapsack(num_pairs):
@@ -49,11 +66,21 @@ def select_knapsack(population):
 
 
 def crossover_knapsack(parent1, parent2, crossover_probability):
-    pass
+    """
+    todo
+    :param parent1:
+    :param parent2:
+    :param crossover_probability:
+    :return:
+    """
+    child1 = []
+    child2 = []
+    return child1, child2
 
 
 def mutate_individual_knapsack(individual, gene):
     """
+    todo: the mutation
     executes a mutation on a specified gene of an individual in the
     knapsack problem
 
@@ -61,7 +88,7 @@ def mutate_individual_knapsack(individual, gene):
     :param gene: the gene or locatation where the mutation takes place
     :return:
     """
-    pass
+    return individual
 
 
 def terminate_knapsack(population) -> bool:
