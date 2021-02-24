@@ -7,13 +7,34 @@ import numpy as np
 
 def main():
     random.seed(0)
-    rewards = initialize_rewards_knapsack(constants.NUMBER_OF_ITEMS)
-    weights = initialize_weights_knapsack(constants.LIGHTEST_WEIGHT,
-                                          constants.HEAVIEST_WEIGHT,
-                                          constants.NUMBER_OF_ITEMS)
+    weight_arr, reward_arr, solution, previous_sol = evolutionary_algorithm_knapsack(
+        crossover_probability=constants.CROSSOVER_PROBABILITY,
+        mutation_probability=constants.MUTATION_PROBABILITY,
+        num_pairs=constants.NUM_PAIRS,
+        elitism_proportion=constants.ELITISM_PROPORTION,
+        num_generations=constants.MAXIMUM_NUMBER_OF_GENERATIONS,
+        lightest_weight=constants.LIGHTEST_WEIGHT,
+        heaviest_weight=constants.HEAVIEST_WEIGHT,
+        number_of_items=constants.NUMBER_OF_ITEMS,
+        knapsack_capacity=constants.KNAPSACK_CAPACITY,
+        tournament_size=constants.TOURNAMENT_SIZE_KNAPSACK,
+        reward_penalty_overweight=constants.REWARD_PENALTY_PER_WEIGHT_UNIT_OVERWEIGHT
+    )
+    print(f"the knapsack capacity is {constants.KNAPSACK_CAPACITY}")
+    print(f"The weight array is {weight_arr}")
+    print(f"The reward_arr is {reward_arr}")
+    solution_weight = np.dot(solution[0], weight_arr)
+    previous_sol_weight = np.dot(previous_sol[0], weight_arr)
+    print(f"weight of solution: {solution_weight}")
+    print(f"weight of previous solution: {previous_sol_weight}")
 
-    rewards_array = np.array(rewards)
-    weights_array = np.array(weights)
+    # rewards = initialize_rewards_knapsack(constants.NUMBER_OF_ITEMS)
+    # weights = initialize_weights_knapsack(constants.LIGHTEST_WEIGHT,
+    #                                       constants.HEAVIEST_WEIGHT,
+    #                                       constants.NUMBER_OF_ITEMS)
+    #
+    # rewards_array = np.array(rewards)
+    # weights_array = np.array(weights)
 
     # print(rewards_array)
     # print(weights_array)
@@ -28,56 +49,73 @@ def main():
     # print(ind)
     # print(type(ind))
 
-    pop = initialize_pop_knapsack(
-        4,
-        constants.NUMBER_OF_ITEMS,
-        rewards_array,
-        weights_array,
-        constants.REWARD_PENALTY_PER_WEIGHT_UNIT_OVERWEIGHT,
-        constants.KNAPSACK_CAPACITY
-    )
-    print(f"population: {pop} ")
+    # pop = initialize_pop_knapsack(
+    #     4,
+    #     constants.NUMBER_OF_ITEMS,
+    #     rewards_array,
+    #     weights_array,
+    #     constants.REWARD_PENALTY_PER_WEIGHT_UNIT_OVERWEIGHT,
+    #     constants.KNAPSACK_CAPACITY
+    # )
+    # print(f"population: {pop} ")
+    #
+    # best = tournament_select_knapsack(population=pop, k=4)
+    # print(f"fittest: {best}")
+    # print(len(best[0]))
+    #
+    # p1, p2 = pop[1], best
+    # c1, c2 = crossover_uniform_knapsack(
+    #     p1, p2,
+    #     constants.CROSSOVER_PROBABILITY,
+    #     rewards_array,
+    #     weights_array,
+    #     constants.REWARD_PENALTY_PER_WEIGHT_UNIT_OVERWEIGHT,
+    #     constants.KNAPSACK_CAPACITY
+    # )
+    # print(f"child1: {c1}")
+    # print(f"child2: {c2}")
+    #
+    # mutant1 = mutate_individual_knapsack(
+    #     c1,
+    #     constants.MUTATION_PROBABILITY,
+    #     rewards_array,
+    #     weights_array,
+    #     constants.REWARD_PENALTY_PER_WEIGHT_UNIT_OVERWEIGHT,
+    #     constants.KNAPSACK_CAPACITY
+    # )
+    # mutant2 = mutate_individual_knapsack(
+    #     c2,
+    #     constants.MUTATION_PROBABILITY,
+    #     rewards_array,
+    #     weights_array,
+    #     constants.REWARD_PENALTY_PER_WEIGHT_UNIT_OVERWEIGHT,
+    #     constants.KNAPSACK_CAPACITY
+    # )
+    # print(f"mutant1: {mutant1}")
+    # print(f"mutant2: {mutant2}")
+    #
+    # pass
 
-    best = tournament_select_knapsack(population=pop, k=4)
-    print(f"fittest: {best}")
-    print(len(best[0]))
 
-    p1, p2 = pop[1], best
-    c1, c2 = crossover_uniform_knapsack(
-        p1, p2,
-        constants.CROSSOVER_PROBABILITY,
-        rewards_array,
-        weights_array,
-        constants.REWARD_PENALTY_PER_WEIGHT_UNIT_OVERWEIGHT,
-        constants.KNAPSACK_CAPACITY
-    )
-    print(f"child1: {c1}")
-    print(f"child2: {c2}")
-
-    # population = initialize_pop_knapsack(constants.NUM_PAIRS,
-    #                                      constants.NUMBER_OF_ITEMS)
-    # print(population)
-    # print(type(population))
-
-    pass
-
-
-def evolutionary_algorithm_knapsack(crossover_probability,
-                                    mutation_probability,
-                                    num_pairs,
-                                    elitism_proportion,
-                                    num_generations,
-                                    lightest_weight,
-                                    heaviest_weight,
-                                    number_of_items,
-                                    knapsack_capacity,
-                                    tournament_size
-                                    ):
+def evolutionary_algorithm_knapsack(
+        crossover_probability,
+        mutation_probability,
+        num_pairs,
+        elitism_proportion,
+        num_generations,
+        lightest_weight,
+        heaviest_weight,
+        number_of_items,
+        knapsack_capacity,
+        tournament_size,
+        reward_penalty_overweight
+):
     """
     generic evolutionary algorithm developed by Holland and discussed
     by Goldberg, adapted to accommodate the knapsack and traveling salesperson
     problem.
 
+    :param reward_penalty_overweight:
     :param tournament_size:
     :param knapsack_capacity:
     :param number_of_items:
@@ -102,16 +140,37 @@ def evolutionary_algorithm_knapsack(crossover_probability,
 
     current_generation = 0
 
-    population = initialize_pop_knapsack(num_pairs=num_pairs)
+    population = initialize_pop_knapsack(
+        num_pairs=num_pairs,
+        number_of_possible_items=number_of_items,
+        rewards=rewards_array,
+        weights=weights_array,
+        reward_penalty_per_unit_overweight=reward_penalty_overweight,
+        knapsack_capacity=knapsack_capacity
+    )
+    # keep track of best so far, to check convergence
+    previous_gen_fittest = None
+    fittest = get_fittest_knapsack(population=population)
 
-    while not terminate_knapsack(population, num_generations,
-                                 current_generation):
+    print(
+        f"fittest individual in generation{current_generation}"
+        f"is {fittest}"
+    )
+
+    while not terminate_knapsack(
+            population,
+            num_generations,
+            current_generation,
+            previous_gen_fittest,
+            fittest
+    ):
         # selecting mating population
         population_mate = [
             tournament_select_knapsack(population, tournament_size)
             for i
             in range(len(population))
         ]
+        # generate new population
         population = []
         while len(population_mate) > 0:
             # drawing parents to mate without replacement
@@ -125,15 +184,34 @@ def evolutionary_algorithm_knapsack(crossover_probability,
                 crossover_uniform_knapsack(
                     parent1=parent1,
                     parent2=parent2,
-                    crossover_probability=crossover_probability
+                    crossover_probability=crossover_probability,
+                    rewards=rewards_array,
+                    weights=weights_array,
+                    reward_penalty_per_unit_overweight=reward_penalty_overweight,
+                    knapsack_capacity=knapsack_capacity
                 )
             )
             for child in children:
-                for gene in child:
-                    mutate_individual_knapsack(child, gene)
-                population.append(child)
+                mutant = mutate_individual_knapsack(
+                    child,
+                    mutation_probability,
+                    rewards_array,
+                    weights_array,
+                    reward_penalty_overweight,
+                    knapsack_capacity
+                )
+            population.append(mutant)
 
-            current_generation += 1
+        # evaluate the new population
+        current_generation += 1
+        previous_gen_fittest = fittest
+        fittest = get_fittest_knapsack(population=population)
+        print(
+            f"fittest individual in generation{current_generation}"
+            f"is {fittest}"
+        )
+
+    return weights_array, rewards_array, fittest, previous_gen_fittest
 
 
 def initialize_rewards_knapsack(number_of_items):
@@ -219,9 +297,13 @@ def fitness_knapsack(
     return fitness_value
 
 
+def get_fittest_knapsack(population):
+    return max(population, key=lambda individual: individual[1])
+
+
 def tournament_select_knapsack(population, k):
     entrants = random.sample(population, k)
-    return max(population, key=lambda item: item[1])
+    return get_fittest_knapsack(entrants)
 
 
 def crossover_uniform_knapsack(
@@ -242,7 +324,7 @@ def crossover_uniform_knapsack(
     :param parent1:
     :param parent2:
     :param crossover_probability:
-    :return:
+    :return: two of four fittest family members
     """
     # coin toss whether this pair will crossover
     if random.random() < crossover_probability:
@@ -307,10 +389,10 @@ def mutate_individual_knapsack(individual,
     :param rewards:
     :param mutation_probability:
     :param individual: the individual which gene needs to be mutated
-    :return:
+    :return: a possibly mutated individual
     """
 
-    for gene in range(individual[0]):
+    for gene in range(len(individual[0])):
         if random.random() < mutation_probability:
             if individual[0][gene] == 0:
                 individual[0][gene] = 1
@@ -328,9 +410,21 @@ def mutate_individual_knapsack(individual,
     return individual_mutant
 
 
-def terminate_knapsack(population, num_generations,
-                       current_generation) -> bool:
-    pass
+def terminate_knapsack(
+        population,
+        num_generations,
+        current_generation,
+        previous_gen_fittest,
+        fittest) -> bool:
+    if current_generation == 0:
+        return False
+    # convergence check
+    if previous_gen_fittest[1] >= fittest[1]:
+        print(
+            f"TERMINATED DUE TO CONVERGENCE IN GENERATION: {current_generation}"
+        )
+        return True
+    return current_generation >= num_generations
 
 
 def initialize_individual_tsp():
