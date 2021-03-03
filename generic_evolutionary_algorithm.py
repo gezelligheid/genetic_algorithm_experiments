@@ -30,11 +30,22 @@ def main():
     # test unit circle
     cities = initialise_unit_circle_points(12)
     print(cities)
-    pop = initialize_pop_tsp(2 ** 16, cities=cities)
-    print(pop)
-    selected = tournament_select_tsp(pop, 2 ** 15)
-    print(selected)
-    print([0, range(5), 0])
+    pop = initialize_pop_tsp(2 ** 12, cities=cities)
+    best = [0]
+    best_path = list(range(1, (len(pop[0][0]) - 1)))
+    best.extend(best_path)
+    best.append(0)
+    print(best)
+    print(pop[0])
+    best_ind = (best, get_fitness_tsp_circle(best, cities=cities))
+
+    p1 = initialize_individual_tsp(cities=cities)
+    p2 = initialize_individual_tsp(cities=cities)
+    print(f"parent1: {p1}")
+    print(f"parent2: {p2}")
+    c1, c2 = crossover_order_tsp(p1, p2, 0, cities=cities)
+    print(f"child1: {c1}")
+    print(f"child2: {c2}")
 
 
 def evolutionary_algorithm_knapsack(
@@ -432,8 +443,71 @@ def get_fittest_tsp(population):
     return min(population, key=lambda ind: ind[1])
 
 
-def crossover_tsp(parent1, parent2, crossover_probability):
-    pass
+def crossover_order_tsp(parent1: tuple,
+                        parent2: tuple,
+                        crossover_probability: float,
+                        cities: dict):
+    # 1. pick two cut points in the tour
+    tour_length = len(cities)
+    cut_points = random.sample(list(range(0, tour_length)), 2)
+    cut_points.sort()
+    print(f"cut pts: {cut_points}")
+
+    # 2. copy the fixed parts of each offspring
+
+    # remove start and end
+    tour_parent1: list = parent1[0][1:-1]
+    tour_parent2: list = parent2[0][1:-1]
+
+    print(f"toer parent 1: {tour_parent1}")
+
+    offspring1_fixed = tour_parent1[cut_points[0]:cut_points[1]]
+    offspring2_fixed = tour_parent2[cut_points[0]:cut_points[1]]
+    print(f"offspring1 fixed part: {offspring1_fixed}")
+    print(f"offspring2 fixed part: {offspring2_fixed}")
+
+    # 3. create the order of the remaining visits after the second cut point
+    # for both offspring
+    offspring1_remaining = tour_parent2
+    offspring2_remaining = tour_parent1
+
+    for i in offspring1_fixed:
+        offspring1_remaining.remove(i)
+
+    for i in offspring2_fixed:
+        offspring2_remaining.remove(i)
+
+    print(f"remaining for offspring 1: {offspring1_remaining}")
+    print(f"remaining for offspring 2: {offspring2_remaining}")
+
+    offspring1_post_cut = offspring1_remaining[
+                          0:(tour_length - cut_points[1] - 1)
+                          ]
+    offspring2_post_cut = offspring2_remaining[
+                          0:(tour_length - cut_points[1] - 1)
+                          ]
+
+    offspring1_pre_cut = offspring1_remaining[
+                         (tour_length - cut_points[1] - 1):len(
+                             offspring1_remaining)
+                         ]
+
+    offspring2_pre_cut = offspring2_remaining[
+                         (tour_length - cut_points[1] - 1):len(
+                             offspring2_remaining)
+                         ]
+
+    # 4. assemble the the tour for both offspring
+    offspring1 = [
+                     0] + offspring1_pre_cut + offspring1_fixed + offspring1_post_cut + [
+                     0]
+    offspring2 = [
+                     0] + offspring2_pre_cut + offspring2_fixed + offspring2_post_cut + [
+                     0]
+
+    o1 = (offspring1, get_fitness_tsp_circle(offspring1, cities=cities))
+    o2 = (offspring2, get_fitness_tsp_circle(offspring2, cities=cities))
+    return o1, o2
 
 
 def mutate_individual_tsp(individual, gene):
@@ -451,7 +525,7 @@ def mutate_individual_tsp(individual, gene):
 def terminate_tsp_circle(population, num_gens, current_gen) -> bool:
     # stopping based on known best solution
     best = [0]
-    best_path = list(range(len(population[0][0])))
+    best_path = list(range(1, len(population[0][0]) - 1))
     best.extend(best_path)
     best.append(0)
 
