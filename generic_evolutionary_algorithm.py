@@ -7,94 +7,34 @@ import numpy as np
 
 def main():
     random.seed(0)
-    weight_arr, reward_arr, solution, previous_sol = evolutionary_algorithm_knapsack(
-        crossover_probability=constants.CROSSOVER_PROBABILITY,
-        mutation_probability=constants.MUTATION_PROBABILITY,
-        num_pairs=constants.NUM_PAIRS,
-        elitism_proportion=constants.ELITISM_PROPORTION,
-        num_generations=constants.MAXIMUM_NUMBER_OF_GENERATIONS,
-        lightest_weight=constants.LIGHTEST_WEIGHT,
-        heaviest_weight=constants.HEAVIEST_WEIGHT,
-        number_of_items=constants.NUMBER_OF_ITEMS,
-        knapsack_capacity=constants.KNAPSACK_CAPACITY,
-        tournament_size=constants.TOURNAMENT_SIZE_KNAPSACK,
-        reward_penalty_overweight=constants.REWARD_PENALTY_PER_WEIGHT_UNIT_OVERWEIGHT
-    )
-    print(f"the knapsack capacity is {constants.KNAPSACK_CAPACITY}")
-    print(f"The weight array is {weight_arr}")
-    print(f"The reward_arr is {reward_arr}")
-    solution_weight = np.dot(solution[0], weight_arr)
-    previous_sol_weight = np.dot(previous_sol[0], weight_arr)
-    print(f"weight of solution: {solution_weight}")
-    print(f"weight of previous solution: {previous_sol_weight}")
+    # results = evolutionary_algorithm_knapsack(
+    #     crossover_probability=constants.CROSSOVER_PROBABILITY,
+    #     mutation_probability=constants.MUTATION_PROBABILITY,
+    #     num_pairs=constants.NUM_PAIRS,
+    #     elitism_proportion=constants.ELITISM_PROPORTION,
+    #     num_generations=constants.MAXIMUM_NUMBER_OF_GENERATIONS,
+    #     lightest_weight=constants.LIGHTEST_WEIGHT,
+    #     heaviest_weight=constants.HEAVIEST_WEIGHT,
+    #     number_of_items=constants.NUMBER_OF_ITEMS,
+    #     knapsack_capacity=constants.KNAPSACK_CAPACITY,
+    #     tournament_size=constants.TOURNAMENT_SIZE_KNAPSACK,
+    #     reward_penalty_overweight=constants.REWARD_PENALTY_PER_WEIGHT_UNIT_OVERWEIGHT
+    # )
+    # (wt_arr, rw_arr, generations, fittest_per_gen) = results
+    #
+    # print(f"the knapsack capacity is {constants.KNAPSACK_CAPACITY}")
+    # print(f"The weight array is {wt_arr}")
+    # print(f"The reward_arr is {rw_arr}")
+    # print(f"generations look like: {generations}")
 
-    # rewards = initialize_rewards_knapsack(constants.NUMBER_OF_ITEMS)
-    # weights = initialize_weights_knapsack(constants.LIGHTEST_WEIGHT,
-    #                                       constants.HEAVIEST_WEIGHT,
-    #                                       constants.NUMBER_OF_ITEMS)
-    #
-    # rewards_array = np.array(rewards)
-    # weights_array = np.array(weights)
-
-    # print(rewards_array)
-    # print(weights_array)
-    #
-    # ind: tuple = initialize_individual_knapsack(
-    #     constants.NUMBER_OF_ITEMS,
-    #     rewards_array,
-    #     weights_array,
-    #     constants.REWARD_PENALTY_PER_WEIGHT_UNIT_OVERWEIGHT,
-    #     constants.KNAPSACK_CAPACITY
-    # )
-    # print(ind)
-    # print(type(ind))
-
-    # pop = initialize_pop_knapsack(
-    #     4,
-    #     constants.NUMBER_OF_ITEMS,
-    #     rewards_array,
-    #     weights_array,
-    #     constants.REWARD_PENALTY_PER_WEIGHT_UNIT_OVERWEIGHT,
-    #     constants.KNAPSACK_CAPACITY
-    # )
-    # print(f"population: {pop} ")
-    #
-    # best = tournament_select_knapsack(population=pop, k=4)
-    # print(f"fittest: {best}")
-    # print(len(best[0]))
-    #
-    # p1, p2 = pop[1], best
-    # c1, c2 = crossover_uniform_knapsack(
-    #     p1, p2,
-    #     constants.CROSSOVER_PROBABILITY,
-    #     rewards_array,
-    #     weights_array,
-    #     constants.REWARD_PENALTY_PER_WEIGHT_UNIT_OVERWEIGHT,
-    #     constants.KNAPSACK_CAPACITY
-    # )
-    # print(f"child1: {c1}")
-    # print(f"child2: {c2}")
-    #
-    # mutant1 = mutate_individual_knapsack(
-    #     c1,
-    #     constants.MUTATION_PROBABILITY,
-    #     rewards_array,
-    #     weights_array,
-    #     constants.REWARD_PENALTY_PER_WEIGHT_UNIT_OVERWEIGHT,
-    #     constants.KNAPSACK_CAPACITY
-    # )
-    # mutant2 = mutate_individual_knapsack(
-    #     c2,
-    #     constants.MUTATION_PROBABILITY,
-    #     rewards_array,
-    #     weights_array,
-    #     constants.REWARD_PENALTY_PER_WEIGHT_UNIT_OVERWEIGHT,
-    #     constants.KNAPSACK_CAPACITY
-    # )
-    # print(f"mutant1: {mutant1}")
-    # print(f"mutant2: {mutant2}")
-    #
-    # pass
+    # test unit circle
+    cities = initialise_unit_circle_points(12)
+    print(cities)
+    pop = initialize_pop_tsp(2 ** 16, cities=cities)
+    print(pop)
+    selected = tournament_select_tsp(pop, 2 ** 15)
+    print(selected)
+    print([0, range(5), 0])
 
 
 def evolutionary_algorithm_knapsack(
@@ -151,7 +91,8 @@ def evolutionary_algorithm_knapsack(
     # keep track of best so far, to check convergence
     previous_gen_fittest = None
     fittest = get_fittest_knapsack(population=population)
-
+    best_solutions_per_generation = [fittest]
+    population_history = [population]
     print(
         f"fittest individual in generation{current_generation}"
         f"is {fittest}"
@@ -200,18 +141,21 @@ def evolutionary_algorithm_knapsack(
                     reward_penalty_overweight,
                     knapsack_capacity
                 )
-            population.append(mutant)
+                population.append(mutant)
 
         # evaluate the new population
         current_generation += 1
         previous_gen_fittest = fittest
         fittest = get_fittest_knapsack(population=population)
+        best_solutions_per_generation.append(fittest)
+        population_history.append(population)
         print(
-            f"fittest individual in generation{current_generation}"
+            f"fittest individual in generation {current_generation} "
             f"is {fittest}"
         )
 
-    return weights_array, rewards_array, fittest, previous_gen_fittest
+    return (weights_array, rewards_array, population_history,
+            best_solutions_per_generation)
 
 
 def initialize_rewards_knapsack(number_of_items):
@@ -263,7 +207,8 @@ def initialize_pop_knapsack(num_pairs,
                                        reward_penalty_per_unit_overweight,
                                        knapsack_capacity)
         for i in
-        range(2 * num_pairs)]
+        range(2 * num_pairs)
+    ]
     return population
 
 
@@ -427,17 +372,64 @@ def terminate_knapsack(
     return current_generation >= num_generations
 
 
-def initialize_individual_tsp():
-    pass
+def initialise_unit_circle_points(number_of_points):
+    city_indices = list(range(number_of_points))
+    city_angles = [
+        (i * 2 * math.pi) / number_of_points for i in range(number_of_points)
+    ]
+    cities = {k: v for (k, v) in zip(city_indices, city_angles)}
+    return cities
 
 
-def initialize_pop_tsp(num_pairs):
-    population_size = 2 * num_pairs
-    pass
+def get_unit_circle_distance(city1, city2, cities):
+    return math.sqrt(
+        2 - 2 * math.cos(cities[city1] - cities[city2])
+    )
 
 
-def select_tsp(population):
-    pass
+def initialize_individual_tsp(cities):
+    """
+     create a randomly ordered list of cities with starting city fixed 0
+    """
+    ordering = list(range(1, len(cities)))
+    random.shuffle(ordering)
+    genotype = [0]
+    genotype.extend(ordering)
+    # return to starting city
+    genotype.append(0)
+    fitness = get_fitness_tsp_circle(genotype, cities)
+
+    return genotype, fitness
+
+
+def get_fitness_tsp_circle(genotype, cities):
+    """ The TSP minimizes distance. Lower is  fitter"""
+    distance = 0
+    for i in range(len(genotype) - 1):
+        distance += get_unit_circle_distance(
+            genotype[i],
+            genotype[i + 1],
+            cities
+        )
+    return distance
+
+
+def initialize_pop_tsp(num_pairs, cities):
+    population = [
+        initialize_individual_tsp(cities=cities)
+        for i in
+        range(2 * num_pairs)
+    ]
+    return population
+
+
+def tournament_select_tsp(population, tournament_size):
+    entrants = random.sample(population, tournament_size)
+    return get_fittest_tsp(entrants)
+
+
+def get_fittest_tsp(population):
+    return min(population, key=lambda ind: ind[1])
 
 
 def crossover_tsp(parent1, parent2, crossover_probability):
@@ -456,8 +448,18 @@ def mutate_individual_tsp(individual, gene):
     pass
 
 
-def terminate_tsp(population) -> bool:
-    pass
+def terminate_tsp_circle(population, num_gens, current_gen) -> bool:
+    # stopping based on known best solution
+    best = [0]
+    best_path = list(range(len(population[0][0])))
+    best.extend(best_path)
+    best.append(0)
+
+    if get_fittest_tsp(population)[0] == best:
+        return True
+    if current_gen >= num_gens:
+        return True
+    return False
 
 
 if __name__ == "__main__":
