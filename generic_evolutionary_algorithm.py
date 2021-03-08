@@ -6,13 +6,13 @@ import numpy as np
 
 
 def main():
-    random.seed(0)
+    random.seed(1)
     # results = evolutionary_algorithm_knapsack(
-    #     crossover_probability=constants.CROSSOVER_PROBABILITY,
-    #     mutation_probability=constants.MUTATION_PROBABILITY,
-    #     num_pairs=constants.NUM_PAIRS,
-    #     elitism_proportion=constants.ELITISM_PROPORTION,
-    #     num_generations=constants.MAXIMUM_NUMBER_OF_GENERATIONS,
+    #     crossover_probability=constants.CROSSOVER_PROBABILITY_KNAPSACK,
+    #     mutation_probability=constants.MUTATION_PROBABILITY_KNAPSACK,
+    #     num_pairs=constants.NUM_PAIRS_KNAPSACK,
+    #     elitism_proportion=constants.ELITISM_PROPORTION_KNAPSACK,
+    #     num_generations=constants.MAXIMUM_NUMBER_OF_GENERATIONS_KNAPSACK,
     #     lightest_weight=constants.LIGHTEST_WEIGHT,
     #     heaviest_weight=constants.HEAVIEST_WEIGHT,
     #     number_of_items=constants.NUMBER_OF_ITEMS,
@@ -27,25 +27,130 @@ def main():
     # print(f"The reward_arr is {rw_arr}")
     # print(f"generations look like: {generations}")
 
-    # test unit circle
-    cities = initialise_unit_circle_points(12)
-    print(cities)
-    pop = initialize_pop_tsp(2 ** 12, cities=cities)
-    best = [0]
-    best_path = list(range(1, (len(pop[0][0]) - 1)))
-    best.extend(best_path)
-    best.append(0)
-    print(best)
-    print(pop[0])
-    best_ind = (best, get_fitness_tsp_circle(best, cities=cities))
+    # TSP testing
 
-    p1 = initialize_individual_tsp(cities=cities)
-    p2 = initialize_individual_tsp(cities=cities)
-    print(f"parent1: {p1}")
-    print(f"parent2: {p2}")
-    c1, c2 = crossover_order_tsp(p1, p2, 0, cities=cities)
-    print(f"child1: {c1}")
-    print(f"child2: {c2}")
+    # # test unit circle
+    # cities = initialise_unit_circle_points(12)
+    # print(cities)
+    # pop = initialize_pop_tsp(2 ** 12, cities=cities)
+    # best = [0]
+    # best_path = list(range(1, (len(pop[0][0]) - 1)))
+    # best.extend(best_path)
+    # best.append(0)
+    # print(best)
+    # print(pop[0])
+    # best_ind = (best, get_fitness_tsp_circle(best, cities=cities))
+    #
+    # p1 = initialize_individual_tsp(cities=cities)
+    # p2 = initialize_individual_tsp(cities=cities)
+    # print(f"parent1: {p1}")
+    # print(f"parent2: {p2}")
+    # c1, c2 = crossover_order_tsp(p1, p2, 0, cities=cities, elitism=True)
+    # print(f"child1: {c1}")
+    # print(f"child2: {c2}")
+    #
+    # mutant1 = mutate_individual_inversion_tsp(c1, cities=cities,
+    #                                           mutation_probability=1,
+    #                                           elitism=True)
+    # print(f"tsp mutant1: {mutant1}")
+
+    pop_hist_tsp, best_hist_tsp = evolutionary_algorithm_tsp(
+        crossover_probability=constants.CROSSOVER_PROBABILITY_TSP,
+        mutation_probability=constants.MUTATION_PROBABILITY_TSP,
+        elitism_mutation=constants.MUTATION_ELITISM_TSP,
+        elitism_crossover=constants.CROSSOVER_ELITISM_TSP,
+        num_generations=constants.GENERATIONS_TSP,
+        number_of_cities=constants.NUMBER_OF_CITIES,
+        num_solution_pairs=constants.NUM_PAIRS_TSP,
+        tournament_size=constants.TOURNAMENT_SIZE_TSP,
+        stopping_epsilon=constants.STOPPING_EPSILON
+
+    )
+    print(best_hist_tsp)
+
+
+def evolutionary_algorithm_tsp(
+        crossover_probability: float,
+        mutation_probability: float,
+        elitism_mutation: bool,
+        elitism_crossover: bool,
+        num_generations: int,
+        number_of_cities: int,
+        num_solution_pairs: int,
+        tournament_size: int,
+        stopping_epsilon: float
+):
+    cities: dict = initialise_unit_circle_points(
+        number_of_points=number_of_cities
+    )
+    population: list = initialize_pop_tsp(num_pairs=num_solution_pairs,
+                                          cities=cities)
+    current_generation = 0
+
+    # keep track of best so far, to check convergence
+    previous_gen_fittest = None
+    fittest = get_fittest_tsp(population=population)
+    best_solutions_per_generation = [fittest]
+    population_history = [population]
+    print(
+        f"fittest individual in generation {current_generation} "
+        f"is {fittest}"
+    )
+
+    while not terminate_tsp_circle(
+            population=population,
+            cities=cities,
+            num_gens=num_generations,
+            current_gen=current_generation,
+            stopping_epsilon=stopping_epsilon
+    ):
+        population_mate = [
+            tournament_select_tsp(
+                population=population,
+                tournament_size=tournament_size
+            )
+            for i in range(len(population))
+        ]
+        # generate new population
+        population = []
+        while len(population_mate) > 0:
+            # drawing parents to mate without replacement
+            # https://stackoverflow.com/questions/306400/
+            # how-to-randomly-select-an-item-from-a-list
+            random_index = randrange(len(population_mate))
+            parent1 = population_mate.pop(random_index)
+            random_index = randrange(len(population_mate))
+            parent2 = population_mate.pop(random_index)
+            children = list(
+                crossover_order_tsp(
+                    parent1=parent1,
+                    parent2=parent2,
+                    cities=cities,
+                    crossover_probability=crossover_probability,
+                    elitism=elitism_crossover
+                )
+            )
+            for child in children:
+                mutant = mutate_individual_inversion_tsp(
+                    individual=child,
+                    cities=cities,
+                    mutation_probability=mutation_probability,
+                    elitism=elitism_mutation
+                )
+                population.append(mutant)
+
+        # evaluate the new population
+        current_generation += 1
+        previous_gen_fittest = fittest
+        fittest = get_fittest_tsp(population=population)
+        best_solutions_per_generation.append(fittest)
+        population_history.append(population)
+        print(
+            f"fittest individual in generation {current_generation} "
+            f"is {fittest}"
+        )
+
+    return population_history, best_solutions_per_generation
 
 
 def evolutionary_algorithm_knapsack(
@@ -335,7 +440,6 @@ def mutate_individual_knapsack(individual,
                                knapsack_capacity
                                ):
     """
-    todo: the mutation
     executes a mutation on a all genes of an individual in the
     knapsack problem
 
@@ -439,19 +543,20 @@ def tournament_select_tsp(population, tournament_size):
     return get_fittest_tsp(entrants)
 
 
-def get_fittest_tsp(population):
+def get_fittest_tsp(population: list):
     return min(population, key=lambda ind: ind[1])
 
 
 def crossover_order_tsp(parent1: tuple,
                         parent2: tuple,
                         crossover_probability: float,
-                        cities: dict):
+                        cities: dict,
+                        elitism: bool):
     # 1. pick two cut points in the tour
     tour_length = len(cities)
     cut_points = random.sample(list(range(0, tour_length)), 2)
     cut_points.sort()
-    print(f"cut pts: {cut_points}")
+    # print(f"cut pts: {cut_points}")
 
     # 2. copy the fixed parts of each offspring
 
@@ -459,12 +564,12 @@ def crossover_order_tsp(parent1: tuple,
     tour_parent1: list = parent1[0][1:-1]
     tour_parent2: list = parent2[0][1:-1]
 
-    print(f"toer parent 1: {tour_parent1}")
+    # print(f"toer parent 1: {tour_parent1}")
 
     offspring1_fixed = tour_parent1[cut_points[0]:cut_points[1]]
     offspring2_fixed = tour_parent2[cut_points[0]:cut_points[1]]
-    print(f"offspring1 fixed part: {offspring1_fixed}")
-    print(f"offspring2 fixed part: {offspring2_fixed}")
+    # print(f"offspring1 fixed part: {offspring1_fixed}")
+    # print(f"offspring2 fixed part: {offspring2_fixed}")
 
     # 3. create the order of the remaining visits after the second cut point
     # for both offspring
@@ -477,8 +582,8 @@ def crossover_order_tsp(parent1: tuple,
     for i in offspring2_fixed:
         offspring2_remaining.remove(i)
 
-    print(f"remaining for offspring 1: {offspring1_remaining}")
-    print(f"remaining for offspring 2: {offspring2_remaining}")
+    # print(f"remaining for offspring 1: {offspring1_remaining}")
+    # print(f"remaining for offspring 2: {offspring2_remaining}")
 
     offspring1_post_cut = offspring1_remaining[
                           0:(tour_length - cut_points[1] - 1)
@@ -504,13 +609,23 @@ def crossover_order_tsp(parent1: tuple,
     offspring2 = [
                      0] + offspring2_pre_cut + offspring2_fixed + offspring2_post_cut + [
                      0]
-
     o1 = (offspring1, get_fitness_tsp_circle(offspring1, cities=cities))
     o2 = (offspring2, get_fitness_tsp_circle(offspring2, cities=cities))
+
+    if elitism:
+        family = [parent1, parent2, o1, o2]
+        # out of four family members select two with highest fitness
+        family.sort(key=lambda member: member[1], reverse=False)
+        return family[0], family[1]
+
     return o1, o2
 
 
-def mutate_individual_inversion_tsp(individual: tuple, cities):
+def mutate_individual_inversion_tsp(
+        individual: tuple,
+        cities: dict,
+        mutation_probability: float,
+        elitism: bool):
     """
     executes a mutation on a specified  individual in the
     traveling salesman problem
@@ -521,12 +636,15 @@ def mutate_individual_inversion_tsp(individual: tuple, cities):
     :param cities: places to visit
     :return:
     """
+    if random.random() > mutation_probability:
+        return individual
+
     # randomly pick the indices to start and end the sequence to invert
     tour_length = len(cities)
     # exclude the start and end point indices from inversion
     cut_points = random.sample(list(range(1, tour_length)), 2)
     cut_points.sort()
-    print(f"cut pts: {cut_points}")
+    # print(f"cut pts: {cut_points}")
 
     # isolate the part to invert
     original_tour = individual[0]
@@ -538,17 +656,32 @@ def mutate_individual_inversion_tsp(individual: tuple, cities):
 
     mutated_individual = (mutated_tour, mutated_fitness)
 
+    if elitism:
+        candidates = [individual, mutated_individual]
+        return get_fittest_tsp(candidates)
+
     return mutated_individual
 
 
-def terminate_tsp_circle(population, num_gens, current_gen) -> bool:
+def terminate_tsp_circle(
+        population: list,
+        cities: dict,
+        num_gens: int,
+        current_gen: int,
+        stopping_epsilon: float
+) -> bool:
     # stopping based on known best solution
     best = [0]
     best_path = list(range(1, len(population[0][0]) - 1))
     best.extend(best_path)
     best.append(0)
 
-    if get_fittest_tsp(population)[0] == best:
+    best_fitness = get_fitness_tsp_circle(best, cities)
+
+    if get_fittest_tsp(population)[1] - best_fitness < stopping_epsilon:
+        print(f"terminating as best solution was found")
+        print(f"known best solution {best} , {best_fitness}")
+        print(f"found best solution {get_fittest_tsp(population)}")
         return True
     if current_gen >= num_gens:
         return True
