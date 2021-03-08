@@ -510,16 +510,35 @@ def crossover_order_tsp(parent1: tuple,
     return o1, o2
 
 
-def mutate_individual_tsp(individual, gene):
+def mutate_individual_inversion_tsp(individual: tuple, cities):
     """
-    executes a mutation on a specified gene of an individual in the
-    knapsack problem
+    executes a mutation on a specified  individual in the
+    traveling salesman problem
+
+    https://www.ijert.org/research/comparison-of-various-mutation-operators-of-genetic-algorithm-to-resolve-travelling-salesman-problem-IJERTV2IS60404.pdf
 
     :param individual: the individual which gene needs to be mutated
-    :param gene: the gene or locatation where the mutation takes place
+    :param cities: places to visit
     :return:
     """
-    pass
+    # randomly pick the indices to start and end the sequence to invert
+    tour_length = len(cities)
+    # exclude the start and end point indices from inversion
+    cut_points = random.sample(list(range(1, tour_length)), 2)
+    cut_points.sort()
+    print(f"cut pts: {cut_points}")
+
+    # isolate the part to invert
+    original_tour = individual[0]
+    inversion_slice = original_tour[cut_points[0]:cut_points[1]]
+    inversion_slice.reverse()
+    mutated_tour = original_tour[:cut_points[0]] \
+                   + inversion_slice + original_tour[cut_points[1]:]
+    mutated_fitness = get_fitness_tsp_circle(mutated_tour, cities)
+
+    mutated_individual = (mutated_tour, mutated_fitness)
+
+    return mutated_individual
 
 
 def terminate_tsp_circle(population, num_gens, current_gen) -> bool:
