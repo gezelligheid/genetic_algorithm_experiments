@@ -1,72 +1,84 @@
 import math
 from random import randrange
 import random
+
+import matplotlib.pyplot as plt
+from typing import List
+
 import constants
 import numpy as np
 
 
+# Define parameters
+
+
 def main():
-    random.seed(1)
-    # results = evolutionary_algorithm_knapsack(
-    #     crossover_probability=constants.CROSSOVER_PROBABILITY_KNAPSACK,
-    #     mutation_probability=constants.MUTATION_PROBABILITY_KNAPSACK,
-    #     num_pairs=constants.NUM_PAIRS_KNAPSACK,
-    #     elitism_proportion=constants.ELITISM_PROPORTION_KNAPSACK,
-    #     num_generations=constants.MAXIMUM_NUMBER_OF_GENERATIONS_KNAPSACK,
-    #     lightest_weight=constants.LIGHTEST_WEIGHT,
-    #     heaviest_weight=constants.HEAVIEST_WEIGHT,
-    #     number_of_items=constants.NUMBER_OF_ITEMS,
-    #     knapsack_capacity=constants.KNAPSACK_CAPACITY,
-    #     tournament_size=constants.TOURNAMENT_SIZE_KNAPSACK,
-    #     reward_penalty_overweight=constants.REWARD_PENALTY_PER_WEIGHT_UNIT_OVERWEIGHT
-    # )
-    # (wt_arr, rw_arr, generations, fittest_per_gen) = results
-    #
-    # print(f"the knapsack capacity is {constants.KNAPSACK_CAPACITY}")
-    # print(f"The weight array is {wt_arr}")
-    # print(f"The reward_arr is {rw_arr}")
-    # print(f"generations look like: {generations}")
+    random.seed(0)
+    np.random.seed(0)
 
-    # TSP testing
+    fitness_history = []
+    fittest_per_gen = []
 
-    # # test unit circle
-    # cities = initialise_unit_circle_points(12)
-    # print(cities)
-    # pop = initialize_pop_tsp(2 ** 12, cities=cities)
-    # best = [0]
-    # best_path = list(range(1, (len(pop[0][0]) - 1)))
-    # best.extend(best_path)
-    # best.append(0)
-    # print(best)
-    # print(pop[0])
-    # best_ind = (best, get_fitness_tsp_circle(best, cities=cities))
-    #
-    # p1 = initialize_individual_tsp(cities=cities)
-    # p2 = initialize_individual_tsp(cities=cities)
-    # print(f"parent1: {p1}")
-    # print(f"parent2: {p2}")
-    # c1, c2 = crossover_order_tsp(p1, p2, 0, cities=cities, elitism=True)
-    # print(f"child1: {c1}")
-    # print(f"child2: {c2}")
-    #
-    # mutant1 = mutate_individual_inversion_tsp(c1, cities=cities,
-    #                                           mutation_probability=1,
-    #                                           elitism=True)
-    # print(f"tsp mutant1: {mutant1}")
+    problem = "TSP"
+    if problem == "knapsack":
 
-    pop_hist_tsp, best_hist_tsp = evolutionary_algorithm_tsp(
-        crossover_probability=constants.CROSSOVER_PROBABILITY_TSP,
-        mutation_probability=constants.MUTATION_PROBABILITY_TSP,
-        elitism_mutation=constants.MUTATION_ELITISM_TSP,
-        elitism_crossover=constants.CROSSOVER_ELITISM_TSP,
-        num_generations=constants.GENERATIONS_TSP,
-        number_of_cities=constants.NUMBER_OF_CITIES,
-        num_solution_pairs=constants.NUM_PAIRS_TSP,
-        tournament_size=constants.TOURNAMENT_SIZE_TSP,
-        stopping_epsilon=constants.STOPPING_EPSILON
+        results = evolutionary_algorithm_knapsack(
+            crossover_probability=constants.CROSSOVER_PROBABILITY_KNAPSACK,
+            mutation_probability=constants.MUTATION_PROBABILITY_KNAPSACK,
+            num_pairs=constants.NUM_PAIRS_KNAPSACK,
+            elitism_proportion=constants.ELITISM_PROPORTION_KNAPSACK,
+            num_generations=constants.MAXIMUM_NUMBER_OF_GENERATIONS_KNAPSACK,
+            lightest_weight=constants.LIGHTEST_WEIGHT,
+            heaviest_weight=constants.HEAVIEST_WEIGHT,
+            number_of_items=constants.NUMBER_OF_ITEMS,
+            knapsack_capacity=constants.KNAPSACK_CAPACITY,
+            tournament_size=constants.TOURNAMENT_SIZE_KNAPSACK,
+            reward_penalty_overweight=constants.REWARD_PENALTY_PER_WEIGHT_UNIT_OVERWEIGHT
+        )
+        (wt_arr, rw_arr, generations, fittest_per_gen) = results
 
+        print(f"the knapsack capacity is {constants.KNAPSACK_CAPACITY}")
+        print(f"The weight array is {wt_arr}")
+        print(f"The reward_arr is {rw_arr}")
+        print(f"generations look like: {generations}")
+
+    elif problem == "TSP":
+
+        generations, fittest_per_gen = evolutionary_algorithm_tsp(
+            crossover_probability=constants.CROSSOVER_PROBABILITY_TSP,
+            mutation_probability=constants.MUTATION_PROBABILITY_TSP,
+            elitism_mutation=constants.MUTATION_ELITISM_TSP,
+            elitism_crossover=constants.CROSSOVER_ELITISM_TSP,
+            num_generations=constants.GENERATIONS_TSP,
+            number_of_cities=constants.NUMBER_OF_CITIES,
+            num_solution_pairs=constants.NUM_PAIRS_TSP,
+            tournament_size=constants.TOURNAMENT_SIZE_TSP,
+            stopping_epsilon=constants.STOPPING_EPSILON
+
+        )
+
+    fitness_history = [ind[1] for ind in fittest_per_gen]
+    print(f"plotting the fitness value over generations: ")
+    text1 = (
+        f"c_elite: {str(constants.CROSSOVER_ELITISM_TSP)}\n"
+        f"m_elite: {str(constants.MUTATION_ELITISM_TSP)}\n"
+        f"tournament_size: {constants.TOURNAMENT_SIZE_TSP}\n"
+        f"population_size: {constants.NUM_PAIRS_TSP * 2}"
     )
-    print(best_hist_tsp)
+    text2 = (
+        f"problem = {problem}\n"
+        f"n_cities: {constants.NUMBER_OF_CITIES}\n"
+        f"c_prob: {constants.CROSSOVER_PROBABILITY_TSP}\n"
+        f"m_prob: {constants.MUTATION_PROBABILITY_TSP}"
+    )
+
+    # right, top = 0.8* fitness_history[0], math.ceil(0.8 * len(fitness_history))
+    # plt.text(right, top, t, family='serif', style='italic', ha='right', wrap=True)
+    plt.plot(fitness_history)
+    plt.gca().set_position((.1, .3, .8, .6))
+    plt.figtext(.02, .02, text2)
+    plt.figtext(.35, .02, text1)
+    plt.show()
 
 
 def evolutionary_algorithm_tsp(
@@ -80,11 +92,18 @@ def evolutionary_algorithm_tsp(
         tournament_size: int,
         stopping_epsilon: float
 ):
-    cities: dict = initialise_unit_circle_points(
-        number_of_points=number_of_cities
-    )
+    # We build a TSP in which the cities to be visited all lie equidistantly
+    # on a unit circle
+    unit_angle = (2 * np.pi) / number_of_cities
+    distances = np.empty(shape=(number_of_cities,
+                                number_of_cities))
+    for i in range(0, number_of_cities):
+        for j in range(0, number_of_cities):
+            angle_between_two_cities = unit_angle * np.abs(i - j)
+            distances[i, j] = 2 * np.sin(angle_between_two_cities / 2)
+
     population: list = initialize_pop_tsp(num_pairs=num_solution_pairs,
-                                          cities=cities)
+                                          distances=distances)
     current_generation = 0
 
     # keep track of best so far, to check convergence
@@ -92,18 +111,15 @@ def evolutionary_algorithm_tsp(
     fittest = get_fittest_tsp(population=population)
     best_solutions_per_generation = [fittest]
     population_history = [population]
-    print(
-        f"fittest individual in generation {current_generation} "
-        f"is {fittest}"
-    )
 
     while not terminate_tsp_circle(
             population=population,
-            cities=cities,
+            distances=distances,
             num_gens=num_generations,
             current_gen=current_generation,
             stopping_epsilon=stopping_epsilon
     ):
+
         population_mate = [
             tournament_select_tsp(
                 population=population,
@@ -125,7 +141,7 @@ def evolutionary_algorithm_tsp(
                 crossover_order_tsp(
                     parent1=parent1,
                     parent2=parent2,
-                    cities=cities,
+                    distances=distances,
                     crossover_probability=crossover_probability,
                     elitism=elitism_crossover
                 )
@@ -133,7 +149,7 @@ def evolutionary_algorithm_tsp(
             for child in children:
                 mutant = mutate_individual_inversion_tsp(
                     individual=child,
-                    cities=cities,
+                    distances=distances,
                     mutation_probability=mutation_probability,
                     elitism=elitism_mutation
                 )
@@ -145,10 +161,6 @@ def evolutionary_algorithm_tsp(
         fittest = get_fittest_tsp(population=population)
         best_solutions_per_generation.append(fittest)
         population_history.append(population)
-        print(
-            f"fittest individual in generation {current_generation} "
-            f"is {fittest}"
-        )
 
     return population_history, best_solutions_per_generation
 
@@ -496,42 +508,40 @@ def initialise_unit_circle_points(number_of_points):
     return cities
 
 
-def get_unit_circle_distance(city1, city2, cities):
-    return math.sqrt(
-        2 - 2 * math.cos(cities[city1] - cities[city2])
-    )
+def get_unit_circle_distance(city1, city2, distances) -> float:
+    return distances[city1, city2]
 
 
-def initialize_individual_tsp(cities):
+def initialize_individual_tsp(distances):
     """
      create a randomly ordered list of cities with starting city fixed 0
     """
-    ordering = list(range(1, len(cities)))
+    ordering = list(range(1, len(distances)))
     random.shuffle(ordering)
     genotype = [0]
     genotype.extend(ordering)
     # return to starting city
     genotype.append(0)
-    fitness = get_fitness_tsp_circle(genotype, cities)
+    fitness = get_fitness_tsp_circle(genotype, distances)
 
     return genotype, fitness
 
 
-def get_fitness_tsp_circle(genotype, cities):
+def get_fitness_tsp_circle(genotype, distances):
     """ The TSP minimizes distance. Lower is  fitter"""
     distance = 0
     for i in range(len(genotype) - 1):
         distance += get_unit_circle_distance(
             genotype[i],
             genotype[i + 1],
-            cities
+            distances
         )
     return distance
 
 
-def initialize_pop_tsp(num_pairs, cities):
+def initialize_pop_tsp(num_pairs, distances):
     population = [
-        initialize_individual_tsp(cities=cities)
+        initialize_individual_tsp(distances=distances)
         for i in
         range(2 * num_pairs)
     ]
@@ -550,10 +560,10 @@ def get_fittest_tsp(population: list):
 def crossover_order_tsp(parent1: tuple,
                         parent2: tuple,
                         crossover_probability: float,
-                        cities: dict,
+                        distances,
                         elitism: bool):
     # 1. pick two cut points in the tour
-    tour_length = len(cities)
+    tour_length = len(distances)
     cut_points = random.sample(list(range(0, tour_length)), 2)
     cut_points.sort()
     # print(f"cut pts: {cut_points}")
@@ -609,8 +619,8 @@ def crossover_order_tsp(parent1: tuple,
     offspring2 = [
                      0] + offspring2_pre_cut + offspring2_fixed + offspring2_post_cut + [
                      0]
-    o1 = (offspring1, get_fitness_tsp_circle(offspring1, cities=cities))
-    o2 = (offspring2, get_fitness_tsp_circle(offspring2, cities=cities))
+    o1 = (offspring1, get_fitness_tsp_circle(offspring1, distances))
+    o2 = (offspring2, get_fitness_tsp_circle(offspring2, distances))
 
     if elitism:
         family = [parent1, parent2, o1, o2]
@@ -623,7 +633,7 @@ def crossover_order_tsp(parent1: tuple,
 
 def mutate_individual_inversion_tsp(
         individual: tuple,
-        cities: dict,
+        distances,
         mutation_probability: float,
         elitism: bool):
     """
@@ -640,7 +650,7 @@ def mutate_individual_inversion_tsp(
         return individual
 
     # randomly pick the indices to start and end the sequence to invert
-    tour_length = len(cities)
+    tour_length = len(distances)
     # exclude the start and end point indices from inversion
     cut_points = random.sample(list(range(1, tour_length)), 2)
     cut_points.sort()
@@ -652,7 +662,7 @@ def mutate_individual_inversion_tsp(
     inversion_slice.reverse()
     mutated_tour = original_tour[:cut_points[0]] \
                    + inversion_slice + original_tour[cut_points[1]:]
-    mutated_fitness = get_fitness_tsp_circle(mutated_tour, cities)
+    mutated_fitness = get_fitness_tsp_circle(mutated_tour, distances)
 
     mutated_individual = (mutated_tour, mutated_fitness)
 
@@ -665,7 +675,7 @@ def mutate_individual_inversion_tsp(
 
 def terminate_tsp_circle(
         population: list,
-        cities: dict,
+        distances,
         num_gens: int,
         current_gen: int,
         stopping_epsilon: float
@@ -676,10 +686,45 @@ def terminate_tsp_circle(
     best.extend(best_path)
     best.append(0)
 
-    best_fitness = get_fitness_tsp_circle(best, cities)
+    best_fitness = get_fitness_tsp_circle(best, distances)
+
+    print(
+        f"fittest individual in generation {current_gen} "
+        f"is {get_fittest_tsp(population)}"
+    )
+    pop_fitness: List[float] = [individual[1] for individual in population]
+
+    print("Population fitness histogram: ")
+    print(np.histogram(pop_fitness))
+
+    plt.hist(pop_fitness, bins=10)
+    text1 = (
+        f"problem: TSP\n"
+        f"n_cities: {constants.NUMBER_OF_CITIES}\n"
+        f"c_prob: {constants.CROSSOVER_PROBABILITY_TSP}\n"
+        f"m_prob: {constants.MUTATION_PROBABILITY_TSP}"
+    )
+    text2 = (
+        f"c_elite: {str(constants.CROSSOVER_ELITISM_TSP)}\n"
+        f"m_elite: {str(constants.MUTATION_ELITISM_TSP)}\n"
+        f"tournament_size: {constants.TOURNAMENT_SIZE_TSP}\n"
+        f"population_size: {constants.NUM_PAIRS_TSP * 2}"
+    )
+    text3 = (f"gemeration is: {current_gen}")
+
+
+    plt.gca().set_position((.1, .3, .8, .6))
+    plt.figtext(.02, .02, text1)
+    plt.figtext(.35, .02, text2)
+    plt.figtext(.68, .02, text3)
+
+    plt.show()
+    print(
+        '-------------------------------------------------------------------')
 
     if get_fittest_tsp(population)[1] - best_fitness < stopping_epsilon:
-        print(f"terminating as best solution was found")
+        print(f"terminating as best solution was found in generation: "
+              f"{current_gen}")
         print(f"known best solution {best} , {best_fitness}")
         print(f"found best solution {get_fittest_tsp(population)}")
         return True
