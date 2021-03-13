@@ -41,6 +41,7 @@ def main():
         print(f"The weight array is {wt_arr}")
         print(f"The reward_arr is {rw_arr}")
         print(f"generations look like: {generations}")
+        print(f"the fittest per generation:\n {fittest_per_gen}")
 
     elif problem == "TSP":
 
@@ -57,27 +58,27 @@ def main():
 
         )
 
-    fitness_history = [ind[1] for ind in fittest_per_gen]
-    print(f"plotting the fitness value over generations: ")
-    text1 = (
-        f"c_elite: {str(constants.CROSSOVER_ELITISM_TSP)}\n"
-        f"m_elite: {str(constants.MUTATION_ELITISM_TSP)}\n"
-        f"tournament_size: {constants.TOURNAMENT_SIZE_TSP}\n"
-        f"population_size: {constants.NUM_PAIRS_TSP * 2}"
-    )
-    text2 = (
-        f"problem = {problem}\n"
-        f"n_cities: {constants.NUMBER_OF_CITIES}\n"
-        f"c_prob: {constants.CROSSOVER_PROBABILITY_TSP}\n"
-        f"m_prob: {constants.MUTATION_PROBABILITY_TSP}"
-    )
+        fitness_history = [ind[1] for ind in fittest_per_gen]
+        print(f"plotting the fitness value over generations: ")
+        text1 = (
+            f"c_elite: {str(constants.CROSSOVER_ELITISM_TSP)}\n"
+            f"m_elite: {str(constants.MUTATION_ELITISM_TSP)}\n"
+            f"tournament_size: {constants.TOURNAMENT_SIZE_TSP}\n"
+            f"population_size: {constants.NUM_PAIRS_TSP * 2}"
+        )
+        text2 = (
+            f"problem = {problem}\n"
+            f"n_cities: {constants.NUMBER_OF_CITIES}\n"
+            f"c_prob: {constants.CROSSOVER_PROBABILITY_TSP}\n"
+            f"m_prob: {constants.MUTATION_PROBABILITY_TSP}"
+        )
 
-    # right, top = 0.8* fitness_history[0], math.ceil(0.8 * len(fitness_history))
-    # plt.text(right, top, t, family='serif', style='italic', ha='right', wrap=True)
-    plt.plot(fitness_history)
-    plt.gca().set_position((.1, .3, .8, .6))
-    plt.figtext(.02, .02, text2)
-    plt.figtext(.35, .02, text1)
+        plt.plot(fitness_history)
+        plt.gca().set_position((.1, .3, .8, .6))
+        plt.figtext(.02, .02, text2)
+        plt.figtext(.35, .02, text1)
+        plt.ylabel("total distance of solution")
+        plt.xlabel("generation")
     plt.show()
 
 
@@ -574,7 +575,7 @@ def crossover_order_tsp(parent1: tuple,
     tour_parent1: list = parent1[0][1:-1]
     tour_parent2: list = parent2[0][1:-1]
 
-    # print(f"toer parent 1: {tour_parent1}")
+    # print(f"tour parent 1: {tour_parent1}")
 
     offspring1_fixed = tour_parent1[cut_points[0]:cut_points[1]]
     offspring2_fixed = tour_parent2[cut_points[0]:cut_points[1]]
@@ -694,33 +695,36 @@ def terminate_tsp_circle(
     )
     pop_fitness: List[float] = [individual[1] for individual in population]
 
-    print("Population fitness histogram: ")
-    print(np.histogram(pop_fitness))
+    # print("Population fitness histogram: ")
+    # print(np.histogram(pop_fitness))
 
-    plt.hist(pop_fitness, bins=10)
-    text1 = (
-        f"problem: TSP\n"
-        f"n_cities: {constants.NUMBER_OF_CITIES}\n"
-        f"c_prob: {constants.CROSSOVER_PROBABILITY_TSP}\n"
-        f"m_prob: {constants.MUTATION_PROBABILITY_TSP}"
-    )
-    text2 = (
-        f"c_elite: {str(constants.CROSSOVER_ELITISM_TSP)}\n"
-        f"m_elite: {str(constants.MUTATION_ELITISM_TSP)}\n"
-        f"tournament_size: {constants.TOURNAMENT_SIZE_TSP}\n"
-        f"population_size: {constants.NUM_PAIRS_TSP * 2}"
-    )
-    text3 = (f"gemeration is: {current_gen}")
+    # plot every 10th generation
+    if current_gen % 10 == 0:
+        plt.hist(pop_fitness, bins=10)
+        text1 = (
+            f"problem: TSP\n"
+            f"n_cities: {constants.NUMBER_OF_CITIES}\n"
+            f"c_prob: {constants.CROSSOVER_PROBABILITY_TSP}\n"
+            f"m_prob: {constants.MUTATION_PROBABILITY_TSP}"
+        )
+        text2 = (
+            f"c_elite: {str(constants.CROSSOVER_ELITISM_TSP)}\n"
+            f"m_elite: {str(constants.MUTATION_ELITISM_TSP)}\n"
+            f"tournament_size: {constants.TOURNAMENT_SIZE_TSP}\n"
+            f"population_size: {constants.NUM_PAIRS_TSP * 2}"
+        )
+        text3 = (f"generation is: {current_gen}")
 
+        plt.gca().set_position((.1, .3, .8, .6))
+        plt.figtext(.02, .02, text1)
+        plt.figtext(.35, .02, text2)
+        plt.figtext(.68, .02, text3)
+        plt.xlabel("total distance of solution")
+        plt.ylabel("frequency")
 
-    plt.gca().set_position((.1, .3, .8, .6))
-    plt.figtext(.02, .02, text1)
-    plt.figtext(.35, .02, text2)
-    plt.figtext(.68, .02, text3)
-
-    plt.show()
-    print(
-        '-------------------------------------------------------------------')
+        plt.show()
+        print(
+            '-------------------------------------------------------------------')
 
     if get_fittest_tsp(population)[1] - best_fitness < stopping_epsilon:
         print(f"terminating as best solution was found in generation: "
@@ -729,6 +733,7 @@ def terminate_tsp_circle(
         print(f"found best solution {get_fittest_tsp(population)}")
         return True
     if current_gen >= num_gens:
+        print(f"terminating as generation limit is reached")
         return True
     return False
 
